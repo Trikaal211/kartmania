@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { useShopStore } from '../../store/shop'   // <-- IMPORTANT
+// import { useShopStore } from '../../store/shop'   // <-- IMPORTANT
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()

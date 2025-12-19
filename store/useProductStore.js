@@ -21,19 +21,13 @@ export const useProductStore = defineStore('productStore', () => {
       to: 0
     },
     
-    // Filter options
+    // Filter options (from separate APIs)
     categories: [],
-    colors: [],
-    sizes: [],
+    colors: [], // From colors API: ["Green", "Pink"]
+    sizes: [], // From sizes API: [{id: 180, size: "S"}, ...]
     brands: [],
     
-    // Filter counts
-    categoryCounts: {},
-    brandCounts: {},
-    colorCounts: {},
-    sizeCounts: {},
-    
-    // Current filters
+    // Current filters for GraphQL queries
     filters: {
       category: '',
       sortBy: 'popularity',
@@ -56,8 +50,8 @@ export const useProductStore = defineStore('productStore', () => {
   
   const products = computed(() => state.value.filteredAndSortedProducts)
   const categories = computed(() => state.value.categories)
-  const colors = computed(() => state.value.colors)
-  const sizes = computed(() => state.value.sizes)
+  const colors = computed(() => state.value.colors) // Direct from API
+  const sizes = computed(() => state.value.sizes) // Direct from API
   const brands = computed(() => state.value.brands)
   const pagination = computed(() => state.value.pagination)
   const filters = computed(() => state.value.filters)
@@ -65,33 +59,31 @@ export const useProductStore = defineStore('productStore', () => {
   const hasInitialized = computed(() => state.value.hasInitialized)
   
   const availableColors = computed(() => {
-    if (!state.value.allProducts.length || !state.value.colors.length) {
+    if (!state.value.colors.length) {
       return []
     }
     
     return state.value.colors.map(color => ({
       name: color,
-      hex: getColorHex(color),
-      count: state.value.colorCounts[color] || 0
-    })).filter(color => color.count > 0)
+      hex: getColorHex(color)
+    }))
   })
   
   const availableSizes = computed(() => {
-    if (!state.value.allProducts.length) return []
+    if (!state.value.sizes.length) return []
     
     return state.value.sizes.map(size => ({
-      name: size.name,
-      count: state.value.sizeCounts[size.name] || 0
-    })).filter(size => size.count > 0)
+      id: size.id,
+      name: size.size
+    }))
   })
   
   const availableBrands = computed(() => {
-    if (!state.value.allProducts.length) return []
+    if (!state.value.brands.length) return []
     
     return state.value.brands.map(brand => ({
-      ...brand,
-      count: state.value.brandCounts[brand.name] || 0
-    })).filter(brand => brand.count > 0)
+      ...brand
+    }))
   })
   
   const hasActiveFilters = computed(() => {
@@ -103,7 +95,7 @@ export const useProductStore = defineStore('productStore', () => {
   
   const defaultMaxPrice = computed(() => {
     if (state.value.allProducts.length === 0) return 50000
-    const maxPrice = Math.max(...state.value.allProducts.map(p => p.price || 0), 50000)
+    const maxPrice = Math.max(...state.value.allProducts.map(p => p.mainProduct?.price || 0), 50000)
     return Math.ceil(maxPrice / 1000) * 1000
   })
 
@@ -120,11 +112,23 @@ export const useProductStore = defineStore('productStore', () => {
   // ==================== HELPER FUNCTIONS ====================
   
   const getProductColor = (product) => {
-    return product.attributes?.[0]?.color || null
+    if (product.mainProduct?.attributes?.[0]?.color) {
+      return product.mainProduct.attributes[0].color
+    }
+    if (product.variants?.[0]?.attributes?.[0]?.color) {
+      return product.variants[0].attributes[0].color
+    }
+    return null
   }
   
   const getProductSize = (product) => {
-    return product.attributes?.[0]?.size || null
+    if (product.mainProduct?.attributes?.[0]?.size) {
+      return product.mainProduct.attributes[0].size
+    }
+    if (product.variants?.[0]?.attributes?.[0]?.size) {
+      return product.variants[0].attributes[0].size
+    }
+    return null
   }
   
   const getProductBrand = (product) => {
@@ -132,33 +136,44 @@ export const useProductStore = defineStore('productStore', () => {
   }
   
   const getDiscountedPrice = (product) => {
-    if (!product.price) return 0
-    const price = Number(product.price)
-    if (product.discountValue && product.discountValue > 0) {
-      return Math.round(price * (1 - product.discountValue / 100))
+    const mainProduct = product.mainProduct
+    if (!mainProduct?.price) return 0
+    
+    const price = Number(mainProduct.price)
+    if (mainProduct.discountValue && mainProduct.discountValue > 0) {
+      return Math.round(price * (1 - mainProduct.discountValue / 100))
     }
     return price
   }
   
+  const getOriginalPrice = (product) => {
+    return product.mainProduct?.price || 0
+  }
+  
   const getProductRating = (product) => {
-    if (!product.reviews?.length) return 0
-    const total = product.reviews.reduce((sum, review) => sum + (review.rating || 0), 0)
-    return total / product.reviews.length
+    const mainProduct = product.mainProduct
+    if (!mainProduct?.reviews?.length) return 0
+    const total = mainProduct.reviews.reduce((sum, review) => sum + (review.rating || 0), 0)
+    return total / mainProduct.reviews.length
+  }
+  
+  const getReviewCount = (product) => {
+    return product.mainProduct?.reviews?.length || 0
   }
   
   const getColorHex = (colorName) => {
     if (!colorName) return '#007bff'
     
     const colorMap = {
+      'Green': '#28a745',
+      'Pink': '#e83e8c',
       'Black': '#000000',
       'Blue': '#007bff',
-      'Green': '#28a745',
       'Red': '#dc3545',
       'White': '#ffffff',
       'Gray': '#6c757d',
       'Grey': '#6c757d',
       'Purple': '#6f42c1',
-      'Pink': '#e83e8c',
       'Yellow': '#ffc107',
       'Orange': '#fd7e14',
       'Brown': '#795548',
@@ -171,30 +186,56 @@ export const useProductStore = defineStore('productStore', () => {
   }
   
   const getProductImage = (product) => {
-    if (!product.images || !product.images.length) {
-      return '/assets/images/placeholder.jpg'
+    const mainImages = product.mainProduct?.images || []
+    if (mainImages.length > 0) {
+      const primaryImage = mainImages.find(img => img.isPrimary === true)
+      if (primaryImage?.imageUrl) {
+        return primaryImage.imageUrl
+      }
+      const firstImage = mainImages[0]?.imageUrl
+      if (firstImage) {
+        return firstImage
+      }
     }
     
-    // Try to find primary image
-    const primaryImage = product.images.find(img => img.isPrimary === true)
-    if (primaryImage?.imageUrl) {
-      return primaryImage.imageUrl
-    }
-    
-    // Otherwise return first image
-    const firstImage = product.images[0]?.imageUrl
-    if (firstImage) {
-      return firstImage
+    const variantImages = product.variants?.[0]?.images || []
+    if (variantImages.length > 0) {
+      const primaryVariantImage = variantImages.find(img => img.isPrimary === true)
+      if (primaryVariantImage?.imageUrl) {
+        return primaryVariantImage.imageUrl
+      }
+      const firstVariantImage = variantImages[0]?.imageUrl
+      if (firstVariantImage) {
+        return firstVariantImage
+      }
     }
     
     return '/assets/images/placeholder.jpg'
+  }
+  
+  const getProductStock = (product) => {
+    return product.mainProduct?.stock || 0
+  }
+  
+  const getProductName = (product) => {
+    return product.name || product.mainProduct?.name || 'Unnamed Product'
+  }
+  
+  const getProductCategory = (product) => {
+    return product.category?.name || null
+  }
+  
+  const getProductId = (product) => {
+    return product.mainProduct?.id || product.groupId
   }
   
   // ==================== CLIENT-SIDE SORTING ====================
   
   const applySorting = (products, sortType) => {
     if (!products.length || !sortType || sortType === 'popularity') {
-      return [...products].sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+      return [...products].sort((a, b) => 
+        (b.mainProduct?.popularity || 0) - (a.mainProduct?.popularity || 0)
+      )
     }
     
     const sorted = [...products]
@@ -216,8 +257,8 @@ export const useProductStore = defineStore('productStore', () => {
         
       case 'newest':
         return sorted.sort((a, b) => {
-          const dateA = new Date(a.createdAt || 0)
-          const dateB = new Date(b.createdAt || 0)
+          const dateA = new Date(a.mainProduct?.createdAt || 0)
+          const dateB = new Date(b.mainProduct?.createdAt || 0)
           return dateB - dateA
         })
         
@@ -229,19 +270,16 @@ export const useProductStore = defineStore('productStore', () => {
         })
         
       default:
-        return sorted.sort((a, b) => (b.popularity || 0) - (a.popularity || 0))
+        return sorted.sort((a, b) => 
+          (b.mainProduct?.popularity || 0) - (a.mainProduct?.popularity || 0)
+        )
     }
   }
   
   // ==================== FILTER & SORT PRODUCTS ====================
   
   const filterAndSortProducts = () => {
-    console.log('=== FILTER AND SORT START ===')
-    console.log('All products count:', state.value.allProducts.length)
-    console.log('Current filters:', state.value.filters)
-    
     if (state.value.allProducts.length === 0) {
-      console.log('No products to filter')
       state.value.filteredAndSortedProducts = []
       state.value.pagination = {
         currentPage: 1,
@@ -254,36 +292,10 @@ export const useProductStore = defineStore('productStore', () => {
       return
     }
     
-    // Start with all products
     let filtered = [...state.value.allProducts]
     const currentFilters = state.value.filters
     
-    // Apply filters
-    if (currentFilters.category) {
-      filtered = filtered.filter(product => 
-        product.category?.name === currentFilters.category
-      )
-    }
-    
-    if (currentFilters.color) {
-      filtered = filtered.filter(product => 
-        getProductColor(product) === currentFilters.color
-      )
-    }
-    
-    if (currentFilters.size) {
-      filtered = filtered.filter(product => 
-        getProductSize(product) === currentFilters.size
-      )
-    }
-    
-    if (currentFilters.brand) {
-      filtered = filtered.filter(product => 
-        product.brand?.name === currentFilters.brand
-      )
-    }
-    
-    // Apply price filter
+    // Apply price filter (client-side)
     if (currentFilters.minPrice > 0 || currentFilters.maxPrice < defaultMaxPrice.value) {
       filtered = filtered.filter(product => {
         const price = getDiscountedPrice(product)
@@ -291,7 +303,7 @@ export const useProductStore = defineStore('productStore', () => {
       })
     }
     
-    // Apply sorting
+    // Apply sorting (client-side)
     filtered = applySorting(filtered, currentFilters.sortBy)
     
     // Update products
@@ -315,10 +327,6 @@ export const useProductStore = defineStore('productStore', () => {
       from: startIndex + 1,
       to: Math.min(endIndex, filtered.length)
     }
-    
-    console.log('Filtered products:', state.value.filteredAndSortedProducts.length)
-    console.log('Pagination:', state.value.pagination)
-    console.log('=== FILTER AND SORT END ===')
   }
   
   // ==================== URL SYNC FUNCTIONS ====================
@@ -400,142 +408,13 @@ export const useProductStore = defineStore('productStore', () => {
     }, undefined, { 
       shallow: true 
     }).finally(() => {
-      // Small delay to ensure everything is processed
       setTimeout(() => {
         state.value.urlUpdateInProgress = false
       }, 50)
     })
   }
   
-  // ==================== CALCULATE FILTER COUNTS ====================
-  
-  const calculateFilterCounts = (products) => {
-    const categoryCounts = {}
-    const brandCounts = {}
-    const colorCounts = {}
-    const sizeCounts = {}
-    
-    products.forEach(product => {
-      // Category count
-      const categoryName = product.category?.name || 'Uncategorized'
-      categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1
-      
-      // Brand count
-      const brandName = product.brand?.name
-      if (brandName) {
-        brandCounts[brandName] = (brandCounts[brandName] || 0) + 1
-      }
-      
-      // Color count
-      const color = getProductColor(product)
-      if (color) {
-        colorCounts[color] = (colorCounts[color] || 0) + 1
-      }
-      
-      // Size count
-      const size = getProductSize(product)
-      if (size) {
-        sizeCounts[size] = (sizeCounts[size] || 0) + 1
-      }
-    })
-    
-    state.value.categoryCounts = categoryCounts
-    state.value.brandCounts = brandCounts
-    state.value.colorCounts = colorCounts
-    state.value.sizeCounts = sizeCounts
-  }
-  
-  // ==================== CREATE FALLBACK DATA ====================
-  
-  const createFallbackData = () => {
-    const dummyProducts = [ 
-      {
-        id: 1,
-        name: "Wireless Bluetooth Headphones",
-        price: 2999,
-        discountValue: 15,
-        stock: 25,
-        popularity: 8,
-        createdAt: new Date().toISOString(),
-        brand: { name: "AudioTech", logo: null },
-        category: { id: 1, name: "Electronics" },
-        images: [{ 
-          isPrimary: true, 
-          imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
-        }],
-        reviews: [
-          { rating: 4, review: "Good sound quality" },
-          { rating: 5, review: "Excellent battery life" }
-        ],
-        attributes: [{ id: 1, color: "Black", size: null }]
-      },
-      {
-        id: 2,
-        name: "Men's Casual T-Shirt",
-        price: 899,
-        discountValue: 0,
-        stock: 50,
-        popularity: 6,
-        createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        brand: { name: "UrbanWear", logo: null },
-        category: { id: 2, name: "Clothing" },
-        images: [{ 
-          isPrimary: true, 
-          imageUrl: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
-        }],
-        reviews: [
-          { rating: 5, review: "Very comfortable" },
-          { rating: 4, review: "Good quality fabric" }
-        ],
-        attributes: [{ id: 2, color: "Blue", size: "M" }]
-      },
-      {
-        id: 3,
-        name: "Smart Watch Series 5",
-        price: 12999,
-        discountValue: 20,
-        stock: 15,
-        popularity: 9,
-        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        brand: { name: "TechWear", logo: null },
-        category: { id: 1, name: "Electronics" },
-        images: [{ 
-          isPrimary: true, 
-          imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
-        }],
-        reviews: [
-          { rating: 5, review: "Amazing features" },
-          { rating: 4, review: "Good battery backup" }
-        ],
-        attributes: [{ id: 3, color: "Black", size: null }]
-      },
-      {
-        id: 4,
-        name: "Running Shoes",
-        price: 3499,
-        discountValue: 10,
-        stock: 30,
-        popularity: 7,
-        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        brand: { name: "RunFast", logo: null },
-        category: { id: 3, name: "Footwear" },
-        images: [{ 
-          isPrimary: true, 
-          imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
-        }],
-        reviews: [
-          { rating: 5, review: "Very comfortable for running" },
-          { rating: 4, review: "Good grip" }
-        ],
-        attributes: [{ id: 4, color: "Red", size: "9" }]
-      }
-    ]
-    
-    state.value.allProducts = dummyProducts
-    calculateFilterCounts(dummyProducts)
-  }
-  
-  // ==================== ACTIONS ====================
+  // ==================== FETCH FILTER OPTIONS ====================
   
   const fetchFilterOptions = async () => {
     try {
@@ -553,6 +432,9 @@ export const useProductStore = defineStore('productStore', () => {
         brandsRes.json()
       ])
       
+      console.log('Colors API Response:', colorsData)
+      console.log('Sizes API Response:', sizesData)
+      
       // Categories
       if (categoriesData.data?.length) {
         state.value.categories = categoriesData.data.map(cat => ({
@@ -563,23 +445,28 @@ export const useProductStore = defineStore('productStore', () => {
         }))
       }
       
-      // Colors - handle different response formats
+      // Colors - Direct from API
       if (colorsData.colors && Array.isArray(colorsData.colors)) {
         state.value.colors = colorsData.colors
       } else if (colorsData.data && Array.isArray(colorsData.data)) {
         state.value.colors = colorsData.data.map(c => c.name || c.color)
-      } else if (colorsData && Array.isArray(colorsData)) {
-        state.value.colors = colorsData
       } else {
-        state.value.colors = ["Black", "White", "Blue", "Red", "Green", "Yellow", "Pink", "Purple", "Gray"]
+        state.value.colors = []
       }
       
-      // Sizes
-      if (sizesData.sizes?.length) {
+      // Sizes - Direct from API
+      if (sizesData.sizes && Array.isArray(sizesData.sizes)) {
         state.value.sizes = sizesData.sizes.map(size => ({
           id: size.id,
-          name: size.size
+          size: size.size
         }))
+      } else if (sizesData.data && Array.isArray(sizesData.data)) {
+        state.value.sizes = sizesData.data.map(s => ({ 
+          id: s.id, 
+          size: s.size || s.name 
+        }))
+      } else {
+        state.value.sizes = []
       }
       
       // Brands
@@ -598,165 +485,283 @@ export const useProductStore = defineStore('productStore', () => {
       console.error('Error fetching filter options:', error)
       
       // Fallback data
-      state.value.colors = ["Black", "White", "Blue", "Red", "Green"]
-      state.value.categories = []
+      state.value.colors = []
       state.value.sizes = []
+      state.value.categories = []
       state.value.brands = []
       
       return false
     }
   }
   
-  const fetchAllProducts = async () => {
+  // ==================== BUILD GRAPHQL QUERY WITH MULTIPLE FILTERS ====================
+  
+  const buildGraphQLQuery = (filters) => {
+    // Start building filter parameters
+    let filterParams = []
+    
+    // Add color filter if selected
+    if (filters.color) {
+      filterParams.push(`color: "${filters.color}"`)
+    }
+    
+    // Add size filter if selected
+    if (filters.size) {
+      filterParams.push(`size: "${filters.size}"`)
+    }
+    
+    // Add category filter if selected
+    if (filters.category) {
+      filterParams.push(`category: "${filters.category}"`)
+    }
+    
+    // Add brand filter if selected
+    if (filters.brand) {
+      filterParams.push(`brand: "${filters.brand}"`)
+    }
+    
+    // Build the filter string for GraphQL
+    let filterString = ''
+    if (filterParams.length > 0) {
+      filterString = `, ${filterParams.join(', ')}`
+    }
+    
+    // Build complete GraphQL query
+    const query = `
+      query ProductFilter {
+        productFilter(page: ${filters.page}, limit: ${filters.limit}${filterString}) {
+          data {
+            groupId
+            name
+            category {
+              name
+            }
+            mainProduct {
+              id
+              name
+              price
+              discountValue
+              stock
+              popularity
+              createdAt
+              images {
+                isPrimary
+                imageUrl
+              }
+              reviews {
+                rating
+                review
+              }
+              attributes {
+                id
+                color
+                size
+              }
+            }
+            variants {
+              id
+              name
+              price
+              images {
+                id
+                isPrimary
+                imageUrl
+              }
+              attributes {
+                color
+                size
+              }
+            }
+          }
+          pagination {
+            currentPage
+            lastPage
+            total
+            perPage
+          }
+        }
+      }
+    `
+    
+    console.log('GraphQL Query with filters:', {
+      color: filters.color || 'none',
+      size: filters.size || 'none',
+      category: filters.category || 'none',
+      brand: filters.brand || 'none'
+    })
+    
+    return query
+  }
+  
+  // ==================== FETCH PRODUCTS WITH MULTIPLE FILTERS ====================
+  
+  const fetchProductsWithFilters = async (filtersToApply = {}) => {
+    state.value.isLoading = true
+    
     try {
+      // Merge new filters with current filters
+      const mergedFilters = { ...state.value.filters, ...filtersToApply }
+      
+      // Don't reset page if only changing page
+      if (Object.keys(filtersToApply).length === 1 && filtersToApply.page) {
+        // Keep other filters as is, just change page
+        mergedFilters.page = filtersToApply.page
+      } else if (Object.keys(filtersToApply).some(key => key !== 'page')) {
+        // Reset to page 1 if any filter except page changes
+        mergedFilters.page = 1
+      }
+      
+      // Update state filters
+      state.value.filters = mergedFilters
+      
+      // Build GraphQL query with all active filters
+      const query = buildGraphQLQuery(mergedFilters)
+      
       const response = await fetch(API_ENDPOINTS.graphql, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: `
-            query AllProducts {
-              productFilter(
-                page: 1,
-                limit: 1000,
-                minPrice: 0,
-                maxPrice: 50000
-              ) {
-                data {
-                  id
-                  name
-                  price
-                  discountValue
-                  stock
-                  popularity
-                  createdAt
-                  brand {
-                    name
-                    logo
-                  }
-                  category {
-                    id
-                    name
-                  }
-                  images {
-                    isPrimary
-                    imageUrl
-                  }
-                  reviews {
-                    rating
-                    review
-                  }
-                  attributes {
-                    id
-                    color
-                    size
-                  }
-                }
-                pagination {
-                  total
-                }
-              }
-            }
-          `
+          query: query
         })
       })
       
       const result = await response.json()
       
       if (result.data?.productFilter?.data) {
-        state.value.allProducts = result.data.productFilter.data.map(product => {
+        const products = result.data.productFilter.data.map(product => {
           // Fix image URLs
-          if (product.images?.length > 0) {
-            product.images = product.images.map(img => {
-              if (img.imageUrl && !img.imageUrl.startsWith('http')) {
-                if (img.imageUrl.startsWith('/')) {
-                  img.imageUrl = `https://kartmania-api.vibrantick.org${img.imageUrl}`
-                } else {
-                  img.imageUrl = `https://kartmania-api.vibrantick.org/${img.imageUrl}`
-                }
+          const fixImageUrl = (url) => {
+            if (url && !url.startsWith('http')) {
+              if (url.startsWith('/')) {
+                return `https://kartmania-api.vibrantick.org${url}`
+              } else {
+                return `https://kartmania-api.vibrantick.org/${url}`
               }
-              return img
-            })
+            }
+            return url
           }
+          
+          // Fix main product images
+          if (product.mainProduct?.images) {
+            product.mainProduct.images = product.mainProduct.images.map(img => ({
+              ...img,
+              imageUrl: fixImageUrl(img.imageUrl)
+            }))
+          }
+          
+          // Fix variant images
+          if (product.variants) {
+            product.variants = product.variants.map(variant => ({
+              ...variant,
+              images: variant.images?.map(img => ({
+                ...img,
+                imageUrl: fixImageUrl(img.imageUrl)
+              })) || []
+            }))
+          }
+          
           return product
         })
         
-        // Calculate all counts
-        calculateFilterCounts(state.value.allProducts)
+        // Update state with new products
+        state.value.allProducts = products
+        state.value.pagination = result.data.productFilter.pagination
         
-        // Set default max price
-        if (state.value.allProducts.length > 0) {
-          const maxProductPrice = Math.max(...state.value.allProducts.map(p => p.price || 0))
-          const calculatedMaxPrice = Math.ceil(maxProductPrice / 1000) * 1000
-          state.value.filters.maxPrice = calculatedMaxPrice
+        // Apply client-side price filtering and sorting
+        filterAndSortProducts()
+        
+        // Update URL
+        updateURLFromFilters(mergedFilters)
+        
+        return {
+          products: state.value.filteredAndSortedProducts,
+          pagination: state.value.pagination
         }
-        
-        return true
       } else {
         console.error('No products data in response:', result.errors)
-        createFallbackData()
-        return true
+        state.value.allProducts = []
+        filterAndSortProducts()
+        throw new Error('No products found')
       }
     } catch (error) {
-      console.error('Error fetching all products:', error)
-      createFallbackData()
-      return true
-    }
-  }
-  
-  // ==================== MAIN PRODUCT FETCH ====================
-  
-  const fetchProducts = async () => {
-    state.value.isLoading = true
-    
-    try {
-      // Apply filters and sorting locally
+      console.error('Error fetching products:', error)
+      state.value.allProducts = []
       filterAndSortProducts()
-      
-      return {
-        products: state.value.filteredAndSortedProducts,
-        pagination: state.value.pagination
-      }
-    } catch (error) {
-      console.error('Error in fetchProducts:', error)
-      state.value.products = []
-      state.value.filteredAndSortedProducts = []
-      state.value.pagination = {
-        currentPage: 1,
-        lastPage: 1,
-        total: 0,
-        perPage: 12,
-        from: 0,
-        to: 0
-      }
       throw error
     } finally {
       state.value.isLoading = false
     }
   }
   
-  // ==================== UPDATE FILTERS ====================
+  // ==================== UPDATE FILTERS (MULTIPLE) ====================
   
-  const updateFilters = (newFilters) => {
-    // Merge new filters with current filters
-    const updatedFilters = { ...state.value.filters, ...newFilters }
-    
-    // Reset to page 1 if any filter except page changes
-    if (Object.keys(newFilters).some(key => key !== 'page')) {
-      updatedFilters.page = 1
-    }
-    
-    // Update state
-    state.value.filters = updatedFilters
-    
-    // Update URL
-    updateURLFromFilters(updatedFilters)
-    
-    // Apply filters immediately
-    filterAndSortProducts()
+  const updateFilters = async (newFilters) => {
+    await fetchProductsWithFilters(newFilters)
   }
   
-  const clearAllFilters = () => {
-    state.value.filters = {
+  // ==================== TOGGLE FILTER FUNCTIONS ====================
+  
+  const toggleColorFilter = async (color) => {
+    const currentFilters = { ...state.value.filters }
+    
+    if (currentFilters.color === color) {
+      // Remove color filter
+      currentFilters.color = ''
+    } else {
+      // Add color filter
+      currentFilters.color = color
+    }
+    
+    await fetchProductsWithFilters(currentFilters)
+  }
+  
+  const toggleSizeFilter = async (size) => {
+    const currentFilters = { ...state.value.filters }
+    
+    if (currentFilters.size === size) {
+      // Remove size filter
+      currentFilters.size = ''
+    } else {
+      // Add size filter
+      currentFilters.size = size
+    }
+    
+    await fetchProductsWithFilters(currentFilters)
+  }
+  
+  const toggleCategoryFilter = async (category) => {
+    const currentFilters = { ...state.value.filters }
+    
+    if (currentFilters.category === category) {
+      // Remove category filter
+      currentFilters.category = ''
+    } else {
+      // Add category filter
+      currentFilters.category = category
+    }
+    
+    await fetchProductsWithFilters(currentFilters)
+  }
+  
+  const toggleBrandFilter = async (brand) => {
+    const currentFilters = { ...state.value.filters }
+    
+    if (currentFilters.brand === brand) {
+      // Remove brand filter
+      currentFilters.brand = ''
+    } else {
+      // Add brand filter
+      currentFilters.brand = brand
+    }
+    
+    await fetchProductsWithFilters(currentFilters)
+  }
+  
+  // ==================== CLEAR FILTERS ====================
+  
+  const clearAllFilters = async () => {
+    // Reset all filters
+    const resetFilters = {
       category: '',
       sortBy: 'popularity',
       page: 1,
@@ -768,14 +773,10 @@ export const useProductStore = defineStore('productStore', () => {
       maxPrice: defaultMaxPrice.value
     }
     
-    // Update URL
-    updateURLFromFilters(state.value.filters)
-    
-    // Apply filters immediately
-    filterAndSortProducts()
+    await fetchProductsWithFilters(resetFilters)
   }
   
-  const clearFilter = (filterName) => {
+  const clearFilter = async (filterName) => {
     const newFilters = { ...state.value.filters }
     
     if (filterName === 'category') {
@@ -794,29 +795,7 @@ export const useProductStore = defineStore('productStore', () => {
     }
     
     newFilters.page = 1
-    state.value.filters = newFilters
-    
-    // Update URL
-    updateURLFromFilters(newFilters)
-    
-    // Apply filters immediately
-    filterAndSortProducts()
-  }
-  
-  const getCategoryCount = (categoryName) => {
-    if (!categoryName) {
-      return state.value.allProducts.length || 0
-    }
-    
-    return state.value.categoryCounts[categoryName] || 0
-  }
-  
-  const getBrandCount = (brandName) => {
-    if (!brandName) {
-      return state.value.allProducts.length || 0
-    }
-    
-    return state.value.brandCounts[brandName] || 0
+    await fetchProductsWithFilters(newFilters)
   }
   
   // ==================== URL SYNC ====================
@@ -835,8 +814,8 @@ export const useProductStore = defineStore('productStore', () => {
       // Update filters in state
       state.value.filters = urlFilters
       
-      // Apply filters
-      filterAndSortProducts()
+      // Fetch products with URL filters
+      await fetchProductsWithFilters(urlFilters)
       
     } catch (error) {
       console.error('Error syncing from URL:', error)
@@ -857,14 +836,11 @@ export const useProductStore = defineStore('productStore', () => {
     try {
       state.value.isLoading = true
       
-      // Load filter options
+      // 1. Load filter options (colors, sizes, etc. from separate APIs)
       await fetchFilterOptions()
       
-      // Load all products
-      await fetchAllProducts()
-      
-      // Sync with URL
-      await syncFiltersFromURL()
+      // 2. Load all products initially (no filters)
+      await fetchProductsWithFilters({})
       
       state.value.hasInitialized = true
       state.value.isLoading = false
@@ -911,22 +887,30 @@ export const useProductStore = defineStore('productStore', () => {
     defaultMaxPrice,
     
     // Actions
-    fetchProducts,
+    fetchProducts: fetchProductsWithFilters,
     updateFilters,
+    toggleColorFilter,
+    toggleSizeFilter,
+    toggleCategoryFilter,
+    toggleBrandFilter,
     clearAllFilters,
     clearFilter,
     initialize,
     syncFiltersFromURL,
-    getCategoryCount,
-    getBrandCount,
     
     // Helper functions
     getProductColor,
     getProductSize,
     getProductBrand,
     getDiscountedPrice,
+    getOriginalPrice,
     getProductRating,
+    getReviewCount,
     getColorHex,
-    getProductImage
+    getProductImage,
+    getProductStock,
+    getProductName,
+    getProductCategory,
+    getProductId
   }
 })

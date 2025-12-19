@@ -1,21 +1,21 @@
-import { defineNuxtConfig } from 'nuxt/config'
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  
+   ssr: false, 
   components: true,
   
   devServer: {
-    port: 3009,
+    port: 5180,
     host: '127.0.0.1'
   },
   
   modules: [
+    '@nuxt/image',
     '@pinia/nuxt',
     '@vueuse/nuxt',
     '@nuxt/image',
-    '@nuxt/ui'
+    '@nuxt/ui',
+    // Urql के लिए module
   ],
   
   css: [

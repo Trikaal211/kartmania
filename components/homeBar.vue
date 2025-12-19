@@ -460,11 +460,11 @@ const selectProduct = (product) => {
   searchQuery.value = product.name
   
   // Navigate to product page
-  const productSlug = toKebabCase(product.name)
+  const productSlug = toKebabCase(product.groupId)
   console.log('Navigating to product:', productSlug)
   
   // Use router to navigate
-  router.push(`/product/${productSlug}`)
+  router.push(`/product/${product.name}--${productSlug}`)
 }
 
 // Toggle mobile search
