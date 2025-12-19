@@ -26,20 +26,11 @@
         <div class="col-lg-8 pe-xl-4">
           <!-- Blog Items -->
           <div class="blog-item-wrapper">
-            <div 
-              v-for="(post, index) in paginatedBlogPosts" 
-              :key="post.slug"
-              class="blog-item"
-              :class="{ 'mb-40': index < paginatedBlogPosts.length - 1 }"
-            >
+            <div v-for="(post, index) in paginatedBlogPosts" :key="post.slug" class="blog-item"
+              :class="{ 'mb-40': index < paginatedBlogPosts.length - 1 }">
               <NuxtLink :to="`/blog/${post.slug}`" class="w-100 h-100 rounded-16 overflow-hidden block">
-                <img 
-                  :src="post.image" 
-                  :alt="post.title" 
-                  class="cover-img w-100"
-                  loading="lazy"
-                  @error="handleImageError"
-                />
+                <img :src="post.image" :alt="post.title" class="cover-img w-100" loading="lazy"
+                  @error="handleImageError" />
               </NuxtLink>
               <div class="blog-item__content mt-24">
                 <span class="bg-main-50 text-main-600 py-4 px-24 rounded-8 mb-16 inline-block">
@@ -83,34 +74,24 @@
           <!-- Pagination -->
           <ul v-if="blogPosts && blogPosts.length > 0" class="pagination flex-align flex-wrap gap-16 mt-40">
             <li class="page-item">
-              <button 
+              <button
                 class="page-link h-64 w-64 flex-center text-xxl rounded-8 fw-medium text-neutral-600 border border-gray-100 hover-border-main-600 hover-bg-main-50"
-                :disabled="currentPage === 1"
-                @click="handlePageChange(currentPage - 1)"
-              >
+                :disabled="currentPage === 1" @click="handlePageChange(currentPage - 1)">
                 <i class="ph-bold ph-arrow-left"></i>
               </button>
             </li>
-            <li 
-              v-for="page in visiblePages" 
-              :key="page"
-              class="page-item"
-              :class="{ active: page === currentPage }"
-            >
-              <button 
+            <li v-for="page in visiblePages" :key="page" class="page-item" :class="{ active: page === currentPage }">
+              <button
                 class="page-link h-64 w-64 flex-center text-md rounded-8 fw-medium text-neutral-600 border border-gray-100 hover-border-main-600 hover-bg-main-50"
                 :class="{ 'bg-main-600 text-white border-main-600': page === currentPage }"
-                @click="handlePageChange(page)"
-              >
+                @click="handlePageChange(page)">
                 {{ page.toString().padStart(2, '0') }}
               </button>
             </li>
             <li class="page-item">
-              <button 
+              <button
                 class="page-link h-64 w-64 flex-center text-xxl rounded-8 fw-medium text-neutral-600 border border-gray-100 hover-border-main-600 hover-bg-main-50"
-                :disabled="currentPage === totalPages"
-                @click="handlePageChange(currentPage + 1)"
-              >
+                :disabled="currentPage === totalPages" @click="handlePageChange(currentPage + 1)">
                 <i class="ph-bold ph-arrow-right"></i>
               </button>
             </li>
@@ -124,36 +105,24 @@
             <h6 class="text-xl mb-32 pb-32 border-bottom border-gray-100">Search Here</h6>
             <form @submit.prevent="handleSearch">
               <div class="input-group">
-                <input 
-                  type="text" 
-                  class="form-control common-input bg-color-three" 
-                  placeholder="Searching..."
-                  v-model="searchQuery"
-                >
+                <input type="text" class="form-control common-input bg-color-three" placeholder="Searching..."
+                  v-model="searchQuery">
                 <button type="submit" class="btn btn-main text-2xl h-56 w-56 flex-center text-2xl input-group-text">
                   <i class="ph ph-magnifying-glass"></i>
                 </button>
               </div>
             </form>
           </div>
-          
+
           <!-- Recent Posts Widget -->
           <div v-if="recentPosts.length > 0" class="blog-sidebar border border-gray-100 rounded-8 p-32 mb-40">
             <h6 class="text-xl mb-32 pb-32 border-bottom border-gray-100">Recent Posts</h6>
-            <div 
-              v-for="(post, index) in recentPosts" 
-              :key="post.slug"
+            <div v-for="(post, index) in recentPosts" :key="post.slug"
               class="d-flex align-items-center flex-sm-nowrap flex-wrap gap-24 mb-16"
-              :class="{ 'mb-0': index === recentPosts.length - 1 }"
-            >
-              <NuxtLink :to="`/blog/${post.slug}`" class="w-100 h-100 rounded-4 overflow-hidden w-120 h-120 flex-shrink-0 block">
-                <img 
-                  :src="post.image" 
-                  :alt="post.title" 
-                  class="cover-img"
-                  loading="lazy"
-                  @error="handleImageError"
-                />
+              :class="{ 'mb-0': index === recentPosts.length - 1 }">
+              <NuxtLink :to="`/blog/${post.slug}`"
+                class="w-100 h-100 rounded-4 overflow-hidden w-120 h-120 flex-shrink-0 block">
+                <img :src="post.image" :alt="post.title" class="cover-img" loading="lazy" @error="handleImageError" />
               </NuxtLink>
               <div class="flex-grow-1">
                 <h6 class="text-lg">
@@ -177,16 +146,10 @@
           <div v-if="categories.length > 0" class="blog-sidebar border border-gray-100 rounded-8 p-32 mb-40">
             <h6 class="text-xl mb-32 pb-32 border-bottom border-gray-100">Categories</h6>
             <ul>
-              <li 
-                v-for="(category, index) in categories" 
-                :key="category.slug"
-                class="mb-16"
-                :class="{ 'mb-0': index === categories.length - 1 }"
-              >
-                <NuxtLink 
-                  :to="`/blog/category/${category.slug}`"
-                  class="flex-between gap-8 text-gray-700 border border-gray-100 rounded-4 p-4 ps-16 hover-border-main-600 hover-text-main-600"
-                >
+              <li v-for="(category, index) in categories" :key="category.slug" class="mb-16"
+                :class="{ 'mb-0': index === categories.length - 1 }">
+                <NuxtLink :to="`/blog/category/${category.slug}`"
+                  class="flex-between gap-8 text-gray-700 border border-gray-100 rounded-4 p-4 ps-16 hover-border-main-600 hover-text-main-600">
                   <span>{{ category.name }} ({{ category.count }})</span>
                   <span class="w-40 h-40 flex-center rounded-4 bg-main-50 text-main-600">
                     <i class="ph ph-arrow-right"></i>
@@ -209,9 +172,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+const config = useRuntimeConfig();
 
 // API URL
-const API_URL = 'https://kartmania-api.vibrantick.org/common/blog/read'
+const API_URL = config.public.api.blogs;
 const DEFAULT_IMAGE = '/assets/images/thumbs/default-blog.png' // Tumhara default image path
 
 // Pagination settings
@@ -220,34 +184,34 @@ const currentPage = ref(1)
 const searchQuery = ref('')
 
 // Fetch blogs from API
-const { data: blogPosts, pending, error, refresh: refreshBlogs } = await useAsyncData('blogs', 
+const { data: blogPosts, pending, error, refresh: refreshBlogs } = await useAsyncData('blogs',
   async () => {
     try {
       console.log('Fetching blogs from API...')
       const response = await $fetch(API_URL)
-      
+
       if (!response.data || !Array.isArray(response.data)) {
         console.error('Invalid API response:', response)
         return []
       }
 
       console.log(`Successfully fetched ${response.data.length} blogs`)
-      
+
       // Transform API data to match our template
       return response.data.map((blog, index) => {
         // Find primary image or use first image
         const primaryImage = blog.images?.find(img => img.isPrimary)
         const firstImage = blog.images?.[0]
-        
+
         // Create excerpt from content (first 150 characters)
-        const excerpt = blog.content 
+        const excerpt = blog.content
           ? blog.content.replace(/\n/g, ' ').substring(0, 150) + '...'
           : 'No content available...'
-        
+
         // Generate a date (since API doesn't provide one)
         const date = new Date()
         date.setDate(date.getDate() - index) // Just for demo - older posts get older dates
-        
+
         return {
           id: blog.slug || `blog-${index}`,
           title: blog.title || 'Untitled Blog',
@@ -274,7 +238,7 @@ const { data: blogPosts, pending, error, refresh: refreshBlogs } = await useAsyn
 // Recent Posts (first 4 posts)
 const recentPosts = computed(() => {
   if (!blogPosts.value || blogPosts.value.length === 0) return []
-  
+
   return blogPosts.value.slice(0, 4).map(post => ({
     id: post.slug,
     title: post.title,
@@ -287,14 +251,14 @@ const recentPosts = computed(() => {
 // Categories from blog posts
 const categories = computed(() => {
   if (!blogPosts.value || blogPosts.value.length === 0) return []
-  
+
   const categoryCount = {}
-  
+
   blogPosts.value.forEach(post => {
     const categoryName = post.category || 'Uncategorized'
     categoryCount[categoryName] = (categoryCount[categoryName] || 0) + 1
   })
-  
+
   return Object.keys(categoryCount).map(cat => ({
     name: cat,
     count: categoryCount[cat],
@@ -305,11 +269,11 @@ const categories = computed(() => {
 // Search functionality
 const filteredBlogs = computed(() => {
   if (!blogPosts.value) return []
-  
+
   if (!searchQuery.value.trim()) return blogPosts.value
-  
+
   const query = searchQuery.value.toLowerCase().trim()
-  return blogPosts.value.filter(post => 
+  return blogPosts.value.filter(post =>
     post.title.toLowerCase().includes(query) ||
     post.excerpt.toLowerCase().includes(query) ||
     post.category.toLowerCase().includes(query)
@@ -317,34 +281,34 @@ const filteredBlogs = computed(() => {
 })
 
 // Pagination calculations
-const totalPages = computed(() => 
+const totalPages = computed(() =>
   Math.ceil(filteredBlogs.value.length / itemsPerPage.value) || 1
 )
 
 const paginatedBlogPosts = computed(() => {
   if (!filteredBlogs.value || filteredBlogs.value.length === 0) return []
-  
+
   const start = (currentPage.value - 1) * itemsPerPage.value
   const end = start + itemsPerPage.value
-  
+
   return filteredBlogs.value.slice(start, end)
 })
 
 const visiblePages = computed(() => {
   const maxVisible = 7
   const pages = []
-  
+
   let start = Math.max(1, currentPage.value - Math.floor(maxVisible / 2))
   let end = Math.min(totalPages.value, start + maxVisible - 1)
-  
+
   if (end - start + 1 < maxVisible) {
     start = Math.max(1, end - maxVisible + 1)
   }
-  
+
   for (let i = start; i <= end; i++) {
     pages.push(i)
   }
-  
+
   return pages
 })
 
@@ -353,7 +317,7 @@ const handlePageChange = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page
     console.log('Page changed to:', page)
-    
+
     // Scroll to top on page change
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -449,7 +413,7 @@ watch(filteredBlogs, () => {
   .pe-xl-4 {
     padding-right: 0 !important;
   }
-  
+
   .ps-xl-4 {
     padding-left: 0 !important;
     margin-top: 40px;
@@ -461,7 +425,7 @@ watch(filteredBlogs, () => {
     padding-top: 40px !important;
     padding-bottom: 40px !important;
   }
-  
+
   .w-120 {
     width: 80px !important;
     height: 80px !important;

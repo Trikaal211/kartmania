@@ -7,7 +7,7 @@
           <div class="contact-box border border-gray-100 rounded-16 px-24 py-40">
             <form @submit.prevent="handleSubmit">
               <h6 class="mb-32">Make Custom Request</h6>
-              
+
               <!-- Success Message -->
               <div v-if="showSuccess" class="alert alert-success mb-32 p-16 rounded-8">
                 <div class="flex-align gap-8">
@@ -15,7 +15,7 @@
                   <span class="text-sm">Your message has been sent successfully!</span>
                 </div>
               </div>
-              
+
               <!-- Error Message -->
               <div v-if="showError" class="alert alert-danger mb-32 p-16 rounded-8">
                 <div class="flex-align gap-8">
@@ -23,22 +23,15 @@
                   <span class="text-sm">{{ errorMessage }}</span>
                 </div>
               </div>
-              
+
               <div class="row gy-4">
                 <!-- Full Name -->
                 <div class="col-sm-6 col-xs-6">
                   <label for="name" class="flex-align gap-4 text-sm font-heading-two text-gray-900 fw-semibold mb-4">
                     Full Name <span class="text-danger text-xl line-height-1">*</span>
                   </label>
-                  <input 
-                    type="text" 
-                    class="common-input px-16" 
-                    id="name" 
-                    v-model="formData.name"
-                    placeholder="Full name"
-                    :disabled="isSubmitting"
-                    :class="{ 'border-danger': errors.name }"
-                  />
+                  <input type="text" class="common-input px-16" id="name" v-model="formData.name"
+                    placeholder="Full name" :disabled="isSubmitting" :class="{ 'border-danger': errors.name }" />
                   <div v-if="errors.name" class="text-danger text-sm mt-2">
                     {{ errors.name }}
                   </div>
@@ -49,15 +42,8 @@
                   <label for="email" class="flex-align gap-4 text-sm font-heading-two text-gray-900 fw-semibold mb-4">
                     Email Address <span class="text-danger text-xl line-height-1">*</span>
                   </label>
-                  <input 
-                    type="email" 
-                    class="common-input px-16" 
-                    id="email" 
-                    v-model="formData.email"
-                    placeholder="Email address"
-                    :disabled="isSubmitting"
-                    :class="{ 'border-danger': errors.email }"
-                  />
+                  <input type="email" class="common-input px-16" id="email" v-model="formData.email"
+                    placeholder="Email address" :disabled="isSubmitting" :class="{ 'border-danger': errors.email }" />
                   <div v-if="errors.email" class="text-danger text-sm mt-2">
                     {{ errors.email }}
                   </div>
@@ -68,15 +54,8 @@
                   <label for="phone" class="flex-align gap-4 text-sm font-heading-two text-gray-900 fw-semibold mb-4">
                     Phone Number <span class="text-danger text-xl line-height-1">*</span>
                   </label>
-                  <input 
-                    type="tel" 
-                    class="common-input px-16" 
-                    id="phone" 
-                    v-model="formData.phone"
-                    placeholder="Phone Number"
-                    :disabled="isSubmitting"
-                    :class="{ 'border-danger': errors.phone }"
-                  />
+                  <input type="tel" class="common-input px-16" id="phone" v-model="formData.phone"
+                    placeholder="Phone Number" :disabled="isSubmitting" :class="{ 'border-danger': errors.phone }" />
                   <div v-if="errors.phone" class="text-danger text-sm mt-2">
                     {{ errors.phone }}
                   </div>
@@ -87,15 +66,8 @@
                   <label for="subject" class="flex-align gap-4 text-sm font-heading-two text-gray-900 fw-semibold mb-4">
                     Subject <span class="text-danger text-xl line-height-1">*</span>
                   </label>
-                  <input 
-                    type="text" 
-                    class="common-input px-16" 
-                    id="subject" 
-                    v-model="formData.subject"
-                    placeholder="Subject"
-                    :disabled="isSubmitting"
-                    :class="{ 'border-danger': errors.subject }"
-                  />
+                  <input type="text" class="common-input px-16" id="subject" v-model="formData.subject"
+                    placeholder="Subject" :disabled="isSubmitting" :class="{ 'border-danger': errors.subject }" />
                   <div v-if="errors.subject" class="text-danger text-sm mt-2">
                     {{ errors.subject }}
                   </div>
@@ -106,15 +78,9 @@
                   <label for="message" class="flex-align gap-4 text-sm font-heading-two text-gray-900 fw-semibold mb-4">
                     Message <span class="text-danger text-xl line-height-1">*</span>
                   </label>
-                  <textarea 
-                    class="common-input px-16" 
-                    id="message" 
-                    v-model="formData.message"
-                    placeholder="Type your message"
-                    rows="5"
-                    :disabled="isSubmitting"
-                    :class="{ 'border-danger': errors.message }"
-                  ></textarea>
+                  <textarea class="common-input px-16" id="message" v-model="formData.message"
+                    placeholder="Type your message" rows="5" :disabled="isSubmitting"
+                    :class="{ 'border-danger': errors.message }"></textarea>
                   <div v-if="errors.message" class="text-danger text-sm mt-2">
                     {{ errors.message }}
                   </div>
@@ -122,11 +88,8 @@
 
                 <!-- Submit Button -->
                 <div class="col-sm-12 mt-32">
-                  <button 
-                    type="submit" 
-                    class="btn btn-main py-18 px-32 rounded-8 flex-center gap-8"
-                    :disabled="isSubmitting"
-                  >
+                  <button type="submit" class="btn btn-main py-18 px-32 rounded-8 flex-center gap-8"
+                    :disabled="isSubmitting">
                     <span v-if="isSubmitting">
                       <i class="ph ph-spinner-gap animate-spin"></i>
                       Sending...
@@ -146,10 +109,11 @@
           <!-- Contact Details -->
           <div class="contact-box border border-gray-100 rounded-16 px-24 py-40">
             <h6 class="mb-48">Get In Touch</h6>
-            
+
             <!-- Phone -->
             <div class="flex-align gap-16 mb-16">
-              <span class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
+              <span
+                class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
                 <i class="ph-fill ph-phone-call"></i>
               </span>
               <a href="tel:+00123456789" class="text-md text-gray-900 hover-text-main-600">
@@ -159,7 +123,8 @@
 
             <!-- Email -->
             <div class="flex-align gap-16 mb-16">
-              <span class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
+              <span
+                class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
                 <i class="ph-fill ph-envelope"></i>
               </span>
               <a href="mailto:support24@marketpro.com" class="text-md text-gray-900 hover-text-main-600">
@@ -169,7 +134,8 @@
 
             <!-- Address -->
             <div class="flex-align gap-16 mb-0">
-              <span class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
+              <span
+                class="w-40 h-40 flex-center rounded-circle border border-gray-100 text-main-two-600 text-2xl flex-shrink-0">
                 <i class="ph-fill ph-map-pin"></i>
               </span>
               <span class="text-md text-gray-900">
@@ -181,10 +147,8 @@
           <!-- Action Buttons -->
           <div class="mt-24 flex-align flex-wrap gap-16">
             <!-- Support Call -->
-            <NuxtLink 
-              to="/support" 
-              class="bg-neutral-600 hover-bg-main-600 rounded-8 p-10 px-16 flex-between flex-wrap gap-8 flex-grow-1 transition-all duration-300"
-            >
+            <NuxtLink to="/support"
+              class="bg-neutral-600 hover-bg-main-600 rounded-8 p-10 px-16 flex-between flex-wrap gap-8 flex-grow-1 transition-all duration-300">
               <span class="text-white fw-medium">Get Support On Call</span>
               <span class="w-36 h-36 bg-main-600 rounded-8 flex-center text-xl text-white">
                 <i class="ph ph-headset"></i>
@@ -192,10 +156,8 @@
             </NuxtLink>
 
             <!-- Get Direction -->
-            <NuxtLink 
-              to="/location" 
-              class="bg-neutral-600 hover-bg-main-600 rounded-8 p-10 px-16 flex-between flex-wrap gap-8 flex-grow-1 transition-all duration-300"
-            >
+            <NuxtLink to="/location"
+              class="bg-neutral-600 hover-bg-main-600 rounded-8 p-10 px-16 flex-between flex-wrap gap-8 flex-grow-1 transition-all duration-300">
               <span class="text-white fw-medium">Get Direction</span>
               <span class="w-36 h-36 bg-main-600 rounded-8 flex-center text-xl text-white">
                 <i class="ph ph-map-pin"></i>
@@ -206,15 +168,16 @@
       </div>
     </div>
   </section>
-  <CartShop/>
+  <CartShop />
 </template>
 
 <script setup>
 import { ref, reactive } from 'vue'
 import CartShop from '~/components/cartShop.vue'
-
+const config = useRuntimeConfig();
 // API endpoint
-const API_URL = 'https://kartmania-api.vibrantick.org/common/contact-us/create'
+// const API_URL = 'https://kartmania-api.vibrantick.org/common/contact-us/create'
+const API_URL = config.public.api.contact;
 
 // Form state
 const formData = reactive({
@@ -243,10 +206,10 @@ const errorMessage = ref('')
 // Validation function
 const validateForm = () => {
   let isValid = true
-  
+
   // Reset errors
   Object.keys(errors).forEach(key => errors[key] = '')
-  
+
   // Name validation
   if (!formData.name.trim()) {
     errors.name = 'Name is required'
@@ -255,7 +218,7 @@ const validateForm = () => {
     errors.name = 'Name must be at least 2 characters'
     isValid = false
   }
-  
+
   // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!formData.email.trim()) {
@@ -265,7 +228,7 @@ const validateForm = () => {
     errors.email = 'Please enter a valid email address'
     isValid = false
   }
-  
+
   // Phone validation
   const phoneRegex = /^[+]?[0-9\s\-()]{10,15}$/
   if (!formData.phone.trim()) {
@@ -275,7 +238,7 @@ const validateForm = () => {
     errors.phone = 'Please enter a valid phone number (10-15 digits)'
     isValid = false
   }
-  
+
   // Subject validation
   if (!formData.subject.trim()) {
     errors.subject = 'Subject is required'
@@ -284,7 +247,7 @@ const validateForm = () => {
     errors.subject = 'Subject must be at least 3 characters'
     isValid = false
   }
-  
+
   // Message validation
   if (!formData.message.trim()) {
     errors.message = 'Message is required'
@@ -296,7 +259,7 @@ const validateForm = () => {
     errors.message = 'Message should not exceed 1000 characters'
     isValid = false
   }
-  
+
   return isValid
 }
 
@@ -306,14 +269,14 @@ const handleSubmit = async () => {
   showSuccess.value = false
   showError.value = false
   errorMessage.value = ''
-  
+
   // Validate form
   if (!validateForm()) {
     return
   }
-  
+
   isSubmitting.value = true
-  
+
   try {
     // Prepare data for API
     const submitData = {
@@ -325,7 +288,7 @@ const handleSubmit = async () => {
       // Add any additional required fields
       createdAt: new Date().toISOString()
     }
-    
+
     // Make API call
     const response = await fetch(API_URL, {
       method: 'POST',
@@ -335,38 +298,38 @@ const handleSubmit = async () => {
       },
       body: JSON.stringify(submitData)
     })
-    
+
     const result = await response.json()
-    
+
     if (!response.ok) {
       // Handle API errors
       throw new Error(result.message || 'Failed to send message. Please try again.')
     }
-    
+
     // Success handling
     showSuccess.value = true
-    
+
     // Reset form
     Object.keys(formData).forEach(key => formData[key] = '')
-    
+
     // Hide success message after 5 seconds
     setTimeout(() => {
       showSuccess.value = false
     }, 5000)
-    
+
   } catch (error) {
     console.error('Error submitting form:', error)
-    
+
     // Show error message
     showError.value = true
     errorMessage.value = error.message || 'Something went wrong. Please try again.'
-    
+
     // Hide error message after 5 seconds
     setTimeout(() => {
       showError.value = false
       errorMessage.value = ''
     }, 5000)
-    
+
   } finally {
     isSubmitting.value = false
   }
@@ -375,7 +338,7 @@ const handleSubmit = async () => {
 // Auto-format phone number
 const formatPhoneNumber = () => {
   let phone = formData.phone.replace(/\D/g, '')
-  
+
   if (phone.length > 3 && phone.length <= 6) {
     formData.phone = phone.replace(/(\d{3})(\d+)/, '$1-$2')
   } else if (phone.length > 6 && phone.length <= 10) {
@@ -496,6 +459,7 @@ textarea.common-input {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -511,6 +475,7 @@ textarea.common-input {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -545,17 +510,17 @@ textarea.common-input {
   .contact-box {
     padding: 20px !important;
   }
-  
+
   .px-24 {
     padding-left: 16px !important;
     padding-right: 16px !important;
   }
-  
+
   .py-40 {
     padding-top: 24px !important;
     padding-bottom: 24px !important;
   }
-  
+
   .flex-grow-1 {
     min-width: 100%;
   }
@@ -581,6 +546,7 @@ textarea.common-input {
   0% {
     left: -100%;
   }
+
   100% {
     left: 100%;
   }

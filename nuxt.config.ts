@@ -1,14 +1,14 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-   ssr: false, 
+  ssr: false,
   components: true,
-  
+
   devServer: {
     port: 5180,
     host: '127.0.0.1'
   },
-  
+
   modules: [
     '@nuxt/image',
     '@pinia/nuxt',
@@ -17,14 +17,14 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     // Urql के लिए module
   ],
-  
+
   css: [
     'swiper/css',
     'swiper/css/navigation',
     'swiper/css/thumbs',
     'swiper/css/autoplay'
   ],
-  
+
   app: {
     head: {
       link: [
@@ -56,20 +56,28 @@ export default defineNuxtConfig({
       ]
     }
   },
-  
+
   router: {
     options: {
       scrollBehaviorType: 'smooth'
     }
   },
-  
+
   build: {
     transpile: ['@urql/vue', 'graphql']
   },
-  
+
   runtimeConfig: {
     public: {
-      graphqlEndpoint: 'https://kartmania-api.vibrantick.org/graphql'
+      api: {
+        categories: process.env.VITE_API_CATEGORIES,
+        colors: process.env.VITE_API_COLORS,
+        sizes: process.env.VITE_API_SIZES,
+        brands: process.env.VITE_API_BRANDS,
+        graphql: process.env.VITE_API_GRAPHQL,
+        blogs: process.env.VITE_API_BLOG,
+        contact: process.env.VITE_API_CONATCT
+      }
     }
   }
 })
